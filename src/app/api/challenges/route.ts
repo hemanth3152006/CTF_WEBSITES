@@ -5,6 +5,12 @@ import { getCurrentUser } from "@/lib/auth";
 export async function GET() {
   try {
     const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: "Authentication required to access the challenge arena." },
+        { status: 401 }
+      );
+    }
     const teamId = user?.teamId;
 
     const isAdmin = user?.role === "ADMIN";

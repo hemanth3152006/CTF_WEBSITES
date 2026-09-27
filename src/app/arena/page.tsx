@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ChallengeModal, { ChallengeData } from "@/components/ChallengeModal";
 import Link from "next/link";
@@ -60,6 +61,7 @@ function PausedChallengeNotice({
 }
 
 export default function ArenaPage() {
+  const router = useRouter();
   const [challenges, setChallenges] = useState<ChallengeData[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -89,14 +91,18 @@ export default function ArenaPage() {
   };
 
   useEffect(() => {
-    fetchChallenges();
     fetch("/api/auth/me")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (data?.authenticated) setCurrentUser(data.user);
+        if (data?.authenticated) {
+          setCurrentUser(data.user);
+          fetchChallenges();
+        } else {
+          router.replace("/login?next=/arena");
+        }
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => router.replace("/login?next=/arena"));
+  }, [router]);
 
   const handleChallengeSolveSuccess = (
     challengeId: string,
