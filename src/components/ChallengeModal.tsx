@@ -26,6 +26,8 @@ export interface ChallengeData {
   fileUrl?: string | null;
   fileName?: string | null;
   fileSize?: string | null;
+  isPaused?: boolean;
+  pausedUntil?: string | null;
   solveCount: number;
   isSolved: boolean;
   firstBlood: string | null;

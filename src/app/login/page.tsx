@@ -19,11 +19,15 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
+    const formData = new FormData(e.currentTarget as HTMLFormElement);
+    const submittedLogin = String(formData.get("login") || "").trim();
+    const submittedPassword = String(formData.get("password") || "");
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ login, password }),
+        body: JSON.stringify({ login: submittedLogin, password: submittedPassword }),
       });
 
       const data = await res.json();
@@ -122,6 +126,7 @@ export default function LoginPage() {
                 <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
+                  name="login"
                   required
                   value={login}
                   onChange={(e) => setLogin(e.target.value)}
@@ -139,6 +144,7 @@ export default function LoginPage() {
                 <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="password"
+                  name="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -150,7 +156,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading || !login || !password}
+              disabled={loading}
               className={`w-full py-2.5 mt-2 rounded-lg font-bold transition flex items-center justify-center gap-2 ${
                 loginMode === "admin"
                   ? "bg-rose-500 hover:bg-rose-400 text-white shadow-[0_0_15px_rgba(244,63,94,0.3)]"

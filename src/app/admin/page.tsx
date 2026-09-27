@@ -12,8 +12,12 @@ import {
   Ban,
   CheckCircle2,
   XCircle,
-  Flame,
   AlertTriangle,
+  Eye,
+  EyeOff,
+  Pause,
+  Play,
+  RotateCcw,
 } from "lucide-react";
 
 export default function AdminPage() {
@@ -43,6 +47,9 @@ export default function AdminPage() {
   const [announceTitle, setAnnounceTitle] = useState("");
   const [announceContent, setAnnounceContent] = useState("");
   const [announcePinned, setAnnouncePinned] = useState(true);
+  const [timerPaused, setTimerPaused] = useState(false);
+  const [timerDuration, setTimerDuration] = useState("24");
+  const [timerBusy, setTimerBusy] = useState(false);
 
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -65,6 +72,12 @@ export default function AdminPage() {
         const subData = await subRes.json();
         setSubmissions(subData.submissions || []);
         setTeams(subData.teams || []);
+      }
+
+      const timerRes = await fetch("/api/event/timer");
+      if (timerRes.ok) {
+        const timerData = await timerRes.json();
+        setTimerPaused(Boolean(timerData.isPaused));
       }
     } catch (e) {
       console.error(e);
@@ -135,6 +148,79 @@ export default function AdminPage() {
       }
     } catch {
       setMessage({ type: "error", text: "Failed to delete challenge." });
+    }
+  };
+
+  const handleToggleVisibility = async (id: string, isVisible: boolean) => {
+    try {
+      const res = await fetch("/api/admin/challenges", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, isVisible: !isVisible }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to update challenge visibility." });
+        return;
+      }
+      setMessage({ type: "success", text: data.message });
+      loadData();
+    } catch {
+      setMessage({ type: "error", text: "Failed to update challenge visibility." });
+    }
+  };
+
+  const handleToggleChallengePause = async (id: string, isPaused: boolean) => {
+    let pauseMinutes = 30;
+    if (!isPaused) {
+      const value = prompt("Pause this challenge for how many minutes?", "30");
+      if (value === null) return;
+      pauseMinutes = Number(value);
+      if (!Number.isFinite(pauseMinutes) || pauseMinutes < 1) {
+        setMessage({ type: "error", text: "Pause duration must be at least 1 minute." });
+        return;
+      }
+    }
+
+    try {
+      const res = await fetch("/api/admin/challenges", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: isPaused ? "resume" : "pause", pauseMinutes }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to update challenge pause state." });
+        return;
+      }
+      setMessage({ type: "success", text: data.message });
+      loadData();
+    } catch {
+      setMessage({ type: "error", text: "Failed to update challenge pause state." });
+    }
+  };
+
+  const handleTimerAction = async (action: "pause" | "start" | "reset") => {
+    if (action === "reset" && !confirm(`Reset the event timer to ${timerDuration} hours?`)) return;
+
+    setTimerBusy(true);
+    try {
+      const res = await fetch("/api/admin/timer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, durationHours: Number(timerDuration) }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to update event timer." });
+        return;
+      }
+      setTimerPaused(Boolean(data.config?.isPaused));
+      setMessage({ type: "success", text: data.message });
+    } catch {
+      setMessage({ type: "error", text: "Failed to update event timer." });
+    } finally {
+      setTimerBusy(false);
     }
   };
 
@@ -266,6 +352,52 @@ export default function AdminPage() {
             <span>{message.text}</span>
           </div>
         )}
+
+        <section className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 p-4 rounded-xl bg-slate-900/70 border border-slate-800">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <RotateCcw className="w-4 h-4 text-cyan-400" />
+              <h2 className="text-sm font-bold text-white">Event Timer Control</h2>
+            </div>
+            <p className="text-[11px] text-slate-400">
+              Pause or resume submissions for all teams, or reset the contest countdown.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <label htmlFor="timer-duration" className="text-slate-400">Reset hours</label>
+            <input
+              id="timer-duration"
+              type="number"
+              min={1}
+              max={168}
+              value={timerDuration}
+              onChange={(e) => setTimerDuration(e.target.value)}
+              className="w-16 px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
+            />
+            <button
+              type="button"
+              disabled={timerBusy}
+              onClick={() => handleTimerAction(timerPaused ? "start" : "pause")}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-bold transition disabled:opacity-50 ${
+                timerPaused
+                  ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25"
+                  : "bg-amber-500/15 text-amber-300 border-amber-500/40 hover:bg-amber-500/25"
+              }`}
+            >
+              {timerPaused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
+              {timerPaused ? "Resume" : "Pause"}
+            </button>
+            <button
+              type="button"
+              disabled={timerBusy}
+              onClick={() => handleTimerAction("reset")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500/15 text-cyan-300 border border-cyan-500/40 hover:bg-cyan-500/25 font-bold transition disabled:opacity-50"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Reset Timer
+            </button>
+          </div>
+        </section>
 
         {/* Tabs */}
         <div className="mt-6 flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto">
@@ -493,19 +625,55 @@ export default function AdminPage() {
                           L{c.level}
                         </span>
                         <span className="text-emerald-400 font-bold">{c.points} pts</span>
+                        <span className={`px-1.5 py-0.5 rounded border ${
+                          c.isPaused
+                            ? "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                            : c.isVisible
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                            : "bg-amber-500/10 text-amber-300 border-amber-500/30"
+                        }`}>
+                          {c.isPaused ? "PAUSED" : c.isVisible ? "VISIBLE" : "HIDDEN"}
+                        </span>
                       </div>
                       <div className="text-[11px] text-slate-400">
                         {c.solveCount} solves • {c.hints?.length || 0} hints
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleDeleteChallenge(c.id)}
-                      className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition border border-transparent hover:border-rose-500/30"
-                      title="Delete Challenge"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleToggleChallengePause(c.id, Boolean(c.isPaused))}
+                        className={`p-2 rounded-lg transition border border-transparent ${
+                          c.isPaused
+                            ? "text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-500/30"
+                            : "text-amber-300 hover:bg-amber-500/10 hover:border-amber-500/30"
+                        }`}
+                        title={c.isPaused ? "Resume Challenge" : "Pause Challenge"}
+                        aria-label={c.isPaused ? `Resume ${c.title}` : `Pause ${c.title}`}
+                      >
+                        {c.isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => handleToggleVisibility(c.id, c.isVisible)}
+                        className={`p-2 rounded-lg transition border border-transparent ${
+                          c.isVisible
+                            ? "text-amber-300 hover:bg-amber-500/10 hover:border-amber-500/30"
+                            : "text-emerald-300 hover:bg-emerald-500/10 hover:border-emerald-500/30"
+                        }`}
+                        title={c.isVisible ? "Hide Challenge" : "Show Challenge"}
+                        aria-label={c.isVisible ? `Hide ${c.title}` : `Show ${c.title}`}
+                      >
+                        {c.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteChallenge(c.id)}
+                        className="p-2 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition border border-transparent hover:border-rose-500/30"
+                        title="Delete Challenge"
+                        aria-label={`Delete ${c.title}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

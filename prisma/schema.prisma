@@ -1,5 +1,5 @@
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -60,6 +60,8 @@ model Challenge {
   fileName           String?
   fileSize           String?
   isVisible          Boolean        @default(true)
+  isPaused           Boolean        @default(false)
+  pausedUntil        DateTime?
   solveCount         Int            @default(0)
   hints              Hint[]
   submissions        Submission[]

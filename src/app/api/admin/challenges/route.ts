@@ -95,19 +95,44 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Access denied. Admin role required." }, { status: 403 });
     }
 
-    const { id, isVisible } = await req.json();
-    if (!id || typeof isVisible !== "boolean") {
-      return NextResponse.json({ error: "Challenge ID and isVisible boolean are required." }, { status: 400 });
+    const { id, isVisible, action, pauseMinutes } = await req.json();
+    if (!id) {
+      return NextResponse.json({ error: "Challenge ID is required." }, { status: 400 });
     }
 
+    if (typeof isVisible === "boolean") {
+      const updated = await prisma.challenge.update({
+        where: { id },
+        data: { isVisible },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: `Challenge "${updated.title}" is now ${isVisible ? "VISIBLE" : "HIDDEN"}.`,
+        challenge: updated,
+      });
+    }
+
+    if (action !== "pause" && action !== "resume") {
+      return NextResponse.json({ error: "Provide a visibility value or pause action." }, { status: 400 });
+    }
+
+    const pausedUntil = action === "pause"
+      ? new Date(Date.now() + Math.max(1, Number(pauseMinutes) || 30) * 60 * 1000)
+      : null;
     const updated = await prisma.challenge.update({
       where: { id },
-      data: { isVisible },
+      data: {
+        isPaused: action === "pause",
+        pausedUntil,
+      },
     });
 
     return NextResponse.json({
       success: true,
-      message: `Challenge "${updated.title}" is now ${isVisible ? "VISIBLE" : "HIDDEN"}.`,
+      message: action === "pause"
+        ? `Challenge "${updated.title}" is paused until ${pausedUntil?.toLocaleTimeString()}.`
+        : `Challenge "${updated.title}" has resumed.`,
       challenge: updated,
     });
   } catch (error) {

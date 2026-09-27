@@ -80,6 +80,13 @@ export async function POST(
       );
     }
 
+    if (challenge.isPaused && (!challenge.pausedUntil || challenge.pausedUntil.getTime() > Date.now())) {
+      return NextResponse.json(
+        { error: "This challenge is temporarily paused. Please wait for it to return." },
+        { status: 403 }
+      );
+    }
+
     // Check if team already solved this challenge
     const alreadySolved = await prisma.solve.findUnique({
       where: {

@@ -61,6 +61,8 @@ export async function GET() {
         fileSize: ch.fileSize,
         solveCount: ch.solves.length,
         isVisible: ch.isVisible,
+        isPaused: ch.isPaused && (!ch.pausedUntil || ch.pausedUntil.getTime() > Date.now()),
+        pausedUntil: ch.pausedUntil,
         isSolved,
         firstBlood: firstBloodSolve ? firstBloodSolve.team.name : null,
         hints: ch.hints.map((h) => ({

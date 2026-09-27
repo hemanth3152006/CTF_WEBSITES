@@ -14,7 +14,50 @@ import {
   Sparkles,
   Lock,
   Shield,
+  PauseCircle,
 } from "lucide-react";
+
+function PausedChallengeNotice({
+  challenge,
+  onExpired,
+}: {
+  challenge: ChallengeData;
+  onExpired: () => void;
+}) {
+  const [remainingSeconds, setRemainingSeconds] = useState(() => {
+    if (!challenge.pausedUntil) return 0;
+    return Math.max(0, Math.ceil((new Date(challenge.pausedUntil).getTime() - Date.now()) / 1000));
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!challenge.pausedUntil) return;
+      setRemainingSeconds(Math.max(0, Math.ceil((new Date(challenge.pausedUntil).getTime() - Date.now()) / 1000)));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [challenge.pausedUntil]);
+
+  useEffect(() => {
+    if (challenge.pausedUntil && remainingSeconds === 0) onExpired();
+  }, [challenge.pausedUntil, onExpired, remainingSeconds]);
+
+  const hours = Math.floor(remainingSeconds / 3600);
+  const minutes = Math.floor((remainingSeconds % 3600) / 60);
+  const seconds = remainingSeconds % 60;
+  const format = (value: number) => String(value).padStart(2, "0");
+
+  return (
+    <div className="min-h-44 flex flex-col items-center justify-center text-center">
+      <PauseCircle className="w-9 h-9 text-amber-400 mb-3" />
+      <h3 className="font-mono font-bold text-base text-white mb-1">WILL BE BACK SOON</h3>
+      <p className="text-xs font-mono text-slate-400 mb-4">{challenge.title} is temporarily paused.</p>
+      <div className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-mono text-xl font-bold tracking-wider">
+        {format(hours)}:{format(minutes)}:{format(seconds)}
+      </div>
+      <span className="mt-2 text-[10px] uppercase tracking-wider text-slate-500">Until challenge returns</span>
+    </div>
+  );
+}
 
 export default function ArenaPage() {
   const [challenges, setChallenges] = useState<ChallengeData[]>([]);
@@ -242,13 +285,21 @@ export default function ArenaPage() {
               {filteredChallenges.map((challenge) => (
                 <div
                   key={challenge.id}
-                  onClick={() => setSelectedChallenge(challenge)}
+                  onClick={() => {
+                    if (!challenge.isPaused) setSelectedChallenge(challenge);
+                  }}
                   className={`group relative p-5 rounded-xl border transition cursor-pointer flex flex-col justify-between ${
-                    challenge.isSolved
+                    challenge.isPaused
+                      ? "bg-amber-950/20 border-amber-500/30 cursor-default"
+                      : challenge.isSolved
                       ? "bg-emerald-950/20 border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                       : "bg-slate-900/70 border-slate-800 hover:border-emerald-500/40 hover:bg-slate-900 hover:shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                   }`}
                 >
+                  {challenge.isPaused ? (
+                    <PausedChallengeNotice challenge={challenge} onExpired={fetchChallenges} />
+                  ) : (
+                    <>
                   {/* Top tags */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -306,6 +357,8 @@ export default function ArenaPage() {
                       </span>
                     </div>
                   </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
