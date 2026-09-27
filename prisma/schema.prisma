@@ -1,0 +1,154 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model User {
+  id           String        @id @default(cuid())
+  username     String        @unique
+  email        String        @unique
+  passwordHash String
+  role         Role          @default(USER)
+  teamId       String?
+  team         Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  submissions  Submission[]
+  solves       Solve[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([teamId])
+}
+
+model Team {
+  id                 String         @id @default(cuid())
+  name               String         @unique
+  joinCode           String         @unique
+  affiliation        String?
+  points             Int            @default(0)
+  lastSubmissionTime DateTime?
+  isBanned           Boolean        @default(false)
+  members            User[]
+  submissions        Submission[]
+  solves             Solve[]
+  unlockedHints      UnlockedHint[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([points, lastSubmissionTime])
+}
+
+model Challenge {
+  id                 String         @id @default(cuid())
+  title              String
+  description        String
+  category           String         // Web, Crypto, Forensics, Reverse, Pwn, OSINT, Misc
+  level              Int            @default(1) // Level 1, 2, 3...
+  difficulty         String         @default("EASY") // EASY, MEDIUM, HARD, INSANE
+  points             Int            @default(100)
+  flagHash           String         // SHA-256 salted hash of flag
+  flagFormat         String?        // e.g., "CTF{...}"
+  fileUrl            String?        // Path or URL to challenge file
+  fileName           String?
+  fileSize           String?
+  isVisible          Boolean        @default(true)
+  solveCount         Int            @default(0)
+  hints              Hint[]
+  submissions        Submission[]
+  solves             Solve[]
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  @@index([category, level])
+}
+
+model Hint {
+  id            String         @id @default(cuid())
+  challengeId   String
+  challenge     Challenge      @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  content       String
+  cost          Int            @default(0) // points deducted from team
+  unlockedBy    UnlockedHint[]
+  createdAt     DateTime       @default(now())
+
+  @@index([challengeId])
+}
+
+model UnlockedHint {
+  id        String   @id @default(cuid())
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  hintId    String
+  hint      Hint     @relation(fields: [hintId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([teamId, hintId])
+  @@index([teamId])
+}
+
+model Submission {
+  id            String    @id @default(cuid())
+  teamId        String
+  team          Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId   String
+  challenge     Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  submittedFlag String
+  isCorrect     Boolean   @default(false)
+  pointsAwarded Int       @default(0)
+  isFirstBlood  Boolean   @default(false)
+  ipAddress     String?
+  createdAt     DateTime  @default(now())
+
+  @@index([teamId, challengeId])
+  @@index([createdAt])
+}
+
+model Solve {
+  id            String    @id @default(cuid())
+  teamId        String
+  team          Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId   String
+  challenge     Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  points        Int
+  isFirstBlood  Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  @@unique([teamId, challengeId]) // Crucial: A team can solve a challenge only once
+  @@index([teamId])
+  @@index([challengeId])
+}
+
+model EventConfig {
+  id               String    @id @default("global")
+  title            String    @default("24-Hour College CTF 2026")
+  description      String    @default("Welcome to the college 24-hour capture the flag battleground.")
+  startTime        DateTime  @default(now())
+  endTime          DateTime  // 24 hours later
+  isPaused               Boolean   @default(false)
+  pausedRemainingSeconds Int?
+  isFrozen               Boolean   @default(false)
+  freezeTime             DateTime?
+  maxTeamSize            Int       @default(4)
+  registrationOpen       Boolean   @default(true)
+  updatedAt              DateTime  @updatedAt
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
