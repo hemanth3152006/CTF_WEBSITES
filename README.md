@@ -20,6 +20,19 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Deploy on Netlify
+
+1. Push the repository to GitHub, including `package-lock.json`, `prisma/schema.prisma`, `prisma/seed.ts`, and the `public/challenges` directory. Do not commit `.env`.
+2. In Netlify, choose **Add new site** > **Import an existing project** and select this GitHub repository.
+3. Use these build settings:
+	- Build command: `npm run build`
+	- Publish directory: `.next`
+4. Add these environment variables in **Site configuration** > **Environment variables** for the Production deploy context: `DATABASE_URL`, `JWT_SECRET`, `FLAG_SALT`, and `ADMIN_SECRET_KEY`. Copy the values from your local `.env`; never paste `.env` into GitHub.
+5. Before the first deploy, ensure the PostgreSQL database has the Prisma schema and seed data. From the project directory, run `npx prisma db push` once, then `npx tsx prisma/seed.ts` once.
+6. Trigger a deploy and test `/login`, registration, the arena, and `/admin`.
+
+Netlify will use its Next.js runtime for the App Router and API routes. The database remains external; Netlify does not persist a local database or uploaded files between deploys.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
