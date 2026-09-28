@@ -1,6 +1,10 @@
 import crypto from "crypto";
 
-const SALT = process.env.FLAG_SALT || "college-ctf-default-salt-key-2026";
+const configuredSalt = process.env.FLAG_SALT;
+if (!configuredSalt) {
+  throw new Error("FLAG_SALT is not configured.");
+}
+const SALT: string = configuredSalt;
 
 /**
  * Normalizes a flag (trims whitespace)
