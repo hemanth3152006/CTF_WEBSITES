@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Shield, Flag, Trophy, Users, BookOpen, LogOut, Terminal, Eye, Radio } from "lucide-react";
+import { Shield, Flag, Trophy, Users, BookOpen, LogOut, Terminal, Eye } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
 
 interface UserSession {
@@ -17,6 +18,13 @@ interface UserSession {
     points: number;
     joinCode: string;
   } | null;
+}
+
+interface NavItem {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  isAdminOnly?: boolean;
 }
 
 export default function Navbar() {
@@ -37,7 +45,7 @@ export default function Navbar() {
       })
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
-  }, [pathname]);
+  }, []);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -46,10 +54,14 @@ export default function Navbar() {
     router.refresh();
   };
 
+  if (loading || !user) {
+    return null;
+  }
+
   // Distinct navigation paths: Admin Portal vs Participant Portal
   const isAdmin = user?.role === "ADMIN";
 
-  const navItems = isAdmin
+  const navItems: NavItem[] = isAdmin
     ? [
         { name: "Command Center", href: "/admin", icon: Shield, isAdminOnly: true },
         { name: "Arena Preview", href: "/arena", icon: Eye },
@@ -103,7 +115,7 @@ export default function Navbar() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
-            const isSpecialAdmin = (item as any).isAdminOnly;
+            const isSpecialAdmin = item.isAdminOnly;
 
             return (
               <Link

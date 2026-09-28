@@ -36,13 +36,12 @@ export default function LoginPage() {
         return;
       }
 
-      // Strict role-based destination routing
+      // Replace the login history entry after the session cookie is set.
       if (data.user?.role === "ADMIN") {
-        router.push("/admin");
+        router.replace("/admin");
       } else {
-        router.push("/arena");
+        router.replace("/arena");
       }
-      router.refresh();
     } catch {
       setError("An unexpected network error occurred.");
     } finally {

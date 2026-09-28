@@ -138,6 +138,7 @@ model EventConfig {
   description      String    @default("Welcome to the college 24-hour capture the flag battleground.")
   startTime        DateTime  @default(now())
   endTime          DateTime  // 24 hours later
+  eventStarted     Boolean   @default(false)
   isPaused               Boolean   @default(false)
   pausedRemainingSeconds Int?
   isFrozen               Boolean   @default(false)

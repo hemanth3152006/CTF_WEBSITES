@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock, Pause, Play, AlertCircle } from "lucide-react";
+import { Clock, Pause, AlertCircle } from "lucide-react";
 
 interface TimerData {
   title: string;
   isPaused: boolean;
+  eventStarted: boolean;
   remainingSeconds: number;
   isEnded: boolean;
   isFrozen: boolean;
@@ -15,6 +16,7 @@ export default function CountdownTimer() {
   const [timerData, setTimerData] = useState<TimerData>({
     title: "CTF",
     isPaused: false,
+    eventStarted: false,
     remainingSeconds: 24 * 3600,
     isEnded: false,
     isFrozen: false,
@@ -28,6 +30,7 @@ export default function CountdownTimer() {
           setTimerData({
             title: data.title,
             isPaused: data.isPaused,
+            eventStarted: data.eventStarted,
             remainingSeconds: data.remainingSeconds,
             isEnded: data.isEnded,
             isFrozen: data.isFrozen,
@@ -69,6 +72,16 @@ export default function CountdownTimer() {
   const seconds = totalSec % 60;
 
   const pad = (n: number) => String(n).padStart(2, "0");
+
+  if (!timerData.eventStarted) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 font-mono text-xs font-bold tracking-wider">
+        <Clock className="w-3.5 h-3.5" />
+        <span>EVENT NOT STARTED</span>
+        <span>00:00:00</span>
+      </div>
+    );
+  }
 
   if (timerData.isPaused) {
     return (

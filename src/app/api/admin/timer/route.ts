@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       const updated = await prisma.eventConfig.update({
         where: { id: "global" },
         data: {
+          eventStarted: true,
           isPaused: false,
           endTime: newEndTime,
           pausedRemainingSeconds: null,
@@ -66,7 +67,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (action === "reset") {
+    if (action === "start-event") {
       const hours = Number(durationHours) || 24;
       const startTime = new Date();
       const endTime = new Date(startTime.getTime() + hours * 3600 * 1000);
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
         data: {
           startTime,
           endTime,
+          eventStarted: true,
           isPaused: false,
           pausedRemainingSeconds: null,
           isFrozen: false,
@@ -84,7 +86,25 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: `Event timer RESET to ${hours} hours.`,
+        message: `Event started with a ${hours}-hour countdown.`,
+        config: updated,
+      });
+    }
+
+    if (action === "reset") {
+      const updated = await prisma.eventConfig.update({
+        where: { id: "global" },
+        data: {
+          eventStarted: false,
+          isPaused: true,
+          pausedRemainingSeconds: 0,
+          isFrozen: false,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Event reset. Set the duration and start it when ready.",
         config: updated,
       });
     }

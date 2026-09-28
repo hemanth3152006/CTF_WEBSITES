@@ -11,7 +11,8 @@ export async function GET() {
       return NextResponse.json({
         title: "24-Hour CTF",
         isPaused: false,
-        remainingSeconds: 24 * 3600,
+        eventStarted: false,
+        remainingSeconds: 0,
         isEnded: false,
         isFrozen: false,
       });
@@ -21,7 +22,10 @@ export async function GET() {
     let remainingSeconds = 0;
     let isEnded = false;
 
-    if (config.isPaused) {
+    if (!config.eventStarted) {
+      remainingSeconds = 0;
+      isEnded = false;
+    } else if (config.isPaused) {
       remainingSeconds = config.pausedRemainingSeconds ?? 0;
       isEnded = remainingSeconds <= 0;
     } else {
@@ -39,6 +43,7 @@ export async function GET() {
       startTime: config.startTime,
       endTime: config.endTime,
       isPaused: config.isPaused,
+      eventStarted: config.eventStarted,
       remainingSeconds,
       isEnded,
       isFrozen: config.isFrozen,

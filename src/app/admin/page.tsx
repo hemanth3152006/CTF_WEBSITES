@@ -47,7 +47,8 @@ export default function AdminPage() {
   const [announceTitle, setAnnounceTitle] = useState("");
   const [announceContent, setAnnounceContent] = useState("");
   const [announcePinned, setAnnouncePinned] = useState(true);
-  const [timerPaused, setTimerPaused] = useState(false);
+  const [timerPaused, setTimerPaused] = useState(true);
+  const [eventStarted, setEventStarted] = useState(false);
   const [timerDuration, setTimerDuration] = useState("24");
   const [timerBusy, setTimerBusy] = useState(false);
 
@@ -78,6 +79,7 @@ export default function AdminPage() {
       if (timerRes.ok) {
         const timerData = await timerRes.json();
         setTimerPaused(Boolean(timerData.isPaused));
+        setEventStarted(Boolean(timerData.eventStarted));
       }
     } catch (e) {
       console.error(e);
@@ -200,8 +202,9 @@ export default function AdminPage() {
     }
   };
 
-  const handleTimerAction = async (action: "pause" | "start" | "reset") => {
-    if (action === "reset" && !confirm(`Reset the event timer to ${timerDuration} hours?`)) return;
+  const handleTimerAction = async (action: "pause" | "start" | "start-event" | "reset") => {
+    if (action === "start-event" && !confirm(`Start the event with a ${timerDuration}-hour countdown?`)) return;
+    if (action === "reset" && !confirm("Reset the event to not started?")) return;
 
     setTimerBusy(true);
     try {
@@ -216,6 +219,7 @@ export default function AdminPage() {
         return;
       }
       setTimerPaused(Boolean(data.config?.isPaused));
+      setEventStarted(Boolean(data.config?.eventStarted));
       setMessage({ type: "success", text: data.message });
     } catch {
       setMessage({ type: "error", text: "Failed to update event timer." });
@@ -360,7 +364,7 @@ export default function AdminPage() {
               <h2 className="text-sm font-bold text-white">Event Timer Control</h2>
             </div>
             <p className="text-[11px] text-slate-400">
-              Pause or resume submissions for all teams, or reset the contest countdown.
+              Set the duration, confirm Start Event, and the countdown will begin for everyone.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -377,6 +381,15 @@ export default function AdminPage() {
             <button
               type="button"
               disabled={timerBusy}
+              onClick={() => handleTimerAction("start-event")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/25 font-bold transition disabled:opacity-50"
+            >
+              <Play className="w-3.5 h-3.5" />
+              {eventStarted ? "Restart Event" : "Start Event"}
+            </button>
+            <button
+              type="button"
+              disabled={timerBusy || !eventStarted}
               onClick={() => handleTimerAction(timerPaused ? "start" : "pause")}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-bold transition disabled:opacity-50 ${
                 timerPaused
