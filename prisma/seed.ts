@@ -1,8 +1,11 @@
 import { PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { getPrismaDatabaseUrl } from "../src/lib/prisma-url";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: { db: { url: getPrismaDatabaseUrl() } },
+});
 const configuredSalt = process.env.FLAG_SALT;
 if (!configuredSalt) {
   throw new Error("FLAG_SALT is not configured.");
