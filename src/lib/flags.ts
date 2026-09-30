@@ -1,10 +1,6 @@
 import crypto from "crypto";
 
-const configuredSalt = process.env.FLAG_SALT;
-if (!configuredSalt) {
-  throw new Error("FLAG_SALT is not configured.");
-}
-const SALT: string = configuredSalt;
+const SALT = process.env.FLAG_SALT || "ctf-flag-pepper-secret-2026-security";
 
 /**
  * Normalizes a flag (trims whitespace)

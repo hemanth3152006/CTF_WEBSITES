@@ -411,6 +411,52 @@ Tools: file, xxd, strings, python3, binwalk, hex editors.`,
   }
 
   console.log(`✅ Loaded ${mirageChallenges.length} official MIRAGE 2.0 challenges into the database.`);
+
+  // 5. Ensure Admin User Exists
+  const adminPasswordHash = await bcrypt.hash("AdminPassword2026!", 10);
+  await prisma.user.upsert({
+    where: { username: "admin" },
+    update: {
+      passwordHash: adminPasswordHash,
+      role: Role.ADMIN,
+    },
+    create: {
+      username: "admin",
+      email: "admin@collegectf.edu",
+      passwordHash: adminPasswordHash,
+      role: Role.ADMIN,
+    },
+  });
+  console.log("✅ Admin user created/verified (admin / AdminPassword2026!)");
+
+  // 6. Ensure Demo Team Exists
+  const demoTeam = await prisma.team.upsert({
+    where: { name: "CyberKnights" },
+    update: {},
+    create: {
+      name: "CyberKnights",
+      joinCode: "KNIGHT-2026",
+      affiliation: "Computer Science Dept",
+      points: 0,
+    },
+  });
+
+  const participantPasswordHash = await bcrypt.hash("HackerPassword123!", 10);
+  await prisma.user.upsert({
+    where: { username: "hacker1" },
+    update: {
+      teamId: demoTeam.id,
+    },
+    create: {
+      username: "hacker1",
+      email: "hacker1@collegectf.edu",
+      passwordHash: participantPasswordHash,
+      role: Role.USER,
+      teamId: demoTeam.id,
+    },
+  });
+  console.log("✅ Demo team 'CyberKnights' created (hacker1 / HackerPassword123!)");
+
   console.log("🎉 MIRAGE 2.0 Seeding Complete!");
 }
 

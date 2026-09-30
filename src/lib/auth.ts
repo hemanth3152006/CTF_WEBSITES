@@ -3,12 +3,9 @@ import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import { prisma } from "./prisma";
 
-const jwtSecret = process.env.JWT_SECRET;
-if (!jwtSecret) {
-  throw new Error("JWT_SECRET is not configured.");
-}
-
-const JWT_SECRET = new TextEncoder().encode(jwtSecret);
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "college-ctf-super-secure-jwt-secret-key-2026-crypto"
+);
 
 export interface TokenPayload {
   userId: string;

@@ -78,10 +78,17 @@ export async function POST(req: NextRequest) {
     });
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Login error:", error);
+    const errMsg = error?.message || "";
+    if (errMsg.includes("DATABASE_URL") || errMsg.includes("protocol") || errMsg.includes("P1001") || errMsg.includes("connect") || errMsg.includes("does not exist")) {
+      return NextResponse.json(
+        { error: "Database error: Cannot connect to database. Make sure DATABASE_URL is configured in your Netlify Environment Variables." },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: "Internal server error during login." },
+      { error: `Internal error: ${errMsg || "Please check server logs."}` },
       { status: 500 }
     );
   }
