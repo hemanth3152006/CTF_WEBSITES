@@ -53,6 +53,7 @@ export async function POST(
       await tx.unlockedHint.create({
         data: {
           teamId: user.teamId!,
+          userId: user.id,
           hintId,
         },
       });

@@ -23,6 +23,30 @@ export async function GET() {
       orderBy: { points: "desc" },
       include: {
         members: { select: { id: true, username: true, email: true } },
+        solves: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            points: true,
+            createdAt: true,
+            user: { select: { id: true, username: true } },
+            challenge: { select: { id: true, title: true } },
+          },
+        },
+        unlockedHints: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            createdAt: true,
+            user: { select: { id: true, username: true } },
+            hint: {
+              select: {
+                cost: true,
+                challenge: { select: { id: true, title: true } },
+              },
+            },
+          },
+        },
         _count: { select: { solves: true, submissions: true } },
       },
     });

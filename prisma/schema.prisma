@@ -22,6 +22,7 @@ model User {
   team         Team?         @relation(fields: [teamId], references: [id], onDelete: SetNull)
   submissions  Submission[]
   solves       Solve[]
+  unlockedHints UnlockedHint[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -88,12 +89,15 @@ model UnlockedHint {
   id        String   @id @default(cuid())
   teamId    String
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   hintId    String
   hint      Hint     @relation(fields: [hintId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([teamId, hintId])
   @@index([teamId])
+  @@index([userId])
 }
 
 model Submission {

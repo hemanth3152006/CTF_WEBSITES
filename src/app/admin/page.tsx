@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import {
   Shield,
@@ -845,7 +845,8 @@ export default function AdminPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-mono">
                   {teams.map((t) => (
-                    <tr key={t.id} className="hover:bg-slate-800/40">
+                    <Fragment key={t.id}>
+                    <tr className="hover:bg-slate-800/40">
                       <td className="py-3 px-4 font-bold text-white flex items-center gap-2">
                         <span>{t.name}</span>
                         {t.isBanned && (
@@ -902,6 +903,58 @@ export default function AdminPage() {
                         </button>
                       </td>
                     </tr>
+                    {t.members.length > 1 && (
+                      <tr className="bg-slate-950/40">
+                        <td colSpan={7} className="px-4 py-4">
+                          <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                            Member activity and hint usage
+                          </div>
+                          <div className="grid gap-2 lg:grid-cols-2">
+                            {t.members.map((member: any) => {
+                              const memberSolves = (t.solves || []).filter((solve: any) => solve.user?.id === member.id);
+                              const memberHints = (t.unlockedHints || []).filter((unlock: any) => unlock.user?.id === member.id);
+
+                              return (
+                                <div key={member.id} className="rounded border border-slate-800 bg-slate-900/80 p-3">
+                                  <div className="mb-2 font-bold text-white">@{member.username}</div>
+                                  <div className="space-y-1.5 text-[11px]">
+                                    <div>
+                                      <span className="text-slate-500">Completed: </span>
+                                      {memberSolves.length > 0 ? (
+                                        <span className="text-emerald-300">
+                                          {memberSolves.map((solve: any) => `${solve.challenge.title} (+${solve.points})`).join(", ")}
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-500">None</span>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-500">Hints used: </span>
+                                      {memberHints.length > 0 ? (
+                                        <span className="text-amber-300">
+                                          {memberHints.map((unlock: any) => `${unlock.hint.challenge.title} (-${unlock.hint.cost})`).join(", ")}
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-500">None</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          {(t.unlockedHints || []).some((unlock: any) => !unlock.user) && (
+                            <div className="mt-2 text-[11px] text-slate-500">
+                              Legacy hint usage without member attribution: {(t.unlockedHints || [])
+                                .filter((unlock: any) => !unlock.user)
+                                .map((unlock: any) => `${unlock.hint.challenge.title} (-${unlock.hint.cost})`)
+                                .join(", ")}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
