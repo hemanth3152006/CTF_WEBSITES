@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CYBER-STRIKE // 24H College CTF Arena",
   description: "Next-generation secure Capture The Flag competition platform for colleges and cybersecurity teams.",
+  icons: {
+    icon: "/vercel.ico",
+    shortcut: "/vercel.ico",
+  },
 };
 
 export default function RootLayout({
