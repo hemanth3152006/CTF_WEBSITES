@@ -12,6 +12,16 @@ interface TimerData {
   isFrozen: boolean;
 }
 
+function formatDuration(totalSeconds: number) {
+  const safeSeconds = Math.max(0, totalSeconds);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+}
+
 export default function CountdownTimer() {
   const [timerData, setTimerData] = useState<TimerData>({
     title: "CTF",
@@ -66,19 +76,14 @@ export default function CountdownTimer() {
     };
   }, []);
 
-  const totalSec = Math.max(0, timerData.remainingSeconds);
-  const hours = Math.floor(totalSec / 3600);
-  const minutes = Math.floor((totalSec % 3600) / 60);
-  const seconds = totalSec % 60;
-
-  const pad = (n: number) => String(n).padStart(2, "0");
+  const formattedTime = formatDuration(timerData.remainingSeconds);
 
   if (!timerData.eventStarted) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 font-mono text-xs font-bold tracking-wider">
         <Clock className="w-3.5 h-3.5" />
         <span>EVENT NOT STARTED</span>
-        <span>00:00:00</span>
+        <span>{formattedTime}</span>
       </div>
     );
   }
@@ -90,9 +95,7 @@ export default function CountdownTimer() {
         <span className="uppercase text-[10px] px-1 rounded bg-amber-500/20 text-amber-300">
           PAUSED
         </span>
-        <span>
-          {pad(hours)}:{pad(minutes)}:{pad(seconds)}
-        </span>
+        <span>{formattedTime}</span>
       </div>
     );
   }
@@ -109,9 +112,7 @@ export default function CountdownTimer() {
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 font-mono text-sm font-semibold tracking-wider shadow-[0_0_15px_rgba(16,185,129,0.15)]">
       <Clock className="w-4 h-4 animate-pulse text-emerald-400" />
-      <span>
-        {pad(hours)}:{pad(minutes)}:{pad(seconds)}
-      </span>
+      <span>{formattedTime}</span>
       {timerData.isFrozen && (
         <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
           ❄️ FROZEN

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Shield, Flag, Trophy, Users, BookOpen, LogOut, Terminal, Eye } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
+import AnnouncementStrip from "./AnnouncementStrip";
 
 interface UserSession {
   id: string;
@@ -201,6 +202,7 @@ export default function Navbar() {
           )}
         </div>
       </div>
+      <AnnouncementStrip />
     </header>
   );
 }
