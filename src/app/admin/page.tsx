@@ -272,6 +272,50 @@ export default function AdminPage() {
     }
   };
 
+  const handleRemoveMember = async (teamId: string, memberId: string, username: string) => {
+    if (!confirm(`Remove @${username} from this team? Their account and submissions will be kept.`)) return;
+
+    try {
+      const res = await fetch("/api/admin/teams", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "remove-member", teamId, memberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to remove team member." });
+        return;
+      }
+      setMessage({ type: "success", text: data.message });
+      loadData();
+    } catch {
+      setMessage({ type: "error", text: "Failed to remove team member." });
+    }
+  };
+
+  const handleDeleteTeam = async (teamId: string, teamName: string) => {
+    if (!confirm(`Delete team "${teamName}" permanently? This will remove its scores, solves, submissions, and hints.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/admin/teams", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete-team", teamId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to delete team." });
+        return;
+      }
+      setMessage({ type: "success", text: data.message });
+      loadData();
+    } catch {
+      setMessage({ type: "error", text: "Failed to delete team." });
+    }
+  };
+
   const handleCreateAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage(null);
@@ -813,7 +857,22 @@ export default function AdminPage() {
                       <td className="py-3 px-4 text-slate-400">{t.joinCode}</td>
                       <td className="py-3 px-4 text-slate-400">{t.affiliation || "—"}</td>
                       <td className="py-3 px-4 text-slate-300">
-                        {t.members.map((m: any) => m.username).join(", ")}
+                        <div className="flex flex-wrap gap-1.5">
+                          {t.members.map((m: any) => (
+                            <span key={m.id} className="inline-flex items-center gap-1 rounded bg-slate-800 px-1.5 py-1">
+                              <span>{m.username}</span>
+                              <button
+                                type="button"
+                                title={`Remove @${m.username}`}
+                                aria-label={`Remove @${m.username} from ${t.name}`}
+                                onClick={() => handleRemoveMember(t.id, m.id, m.username)}
+                                className="text-rose-400 hover:text-rose-300"
+                              >
+                                <XCircle className="h-3.5 w-3.5" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
                       </td>
                       <td className="py-3 px-4 font-bold text-emerald-400">{t.points}</td>
                       <td className="py-3 px-4 text-slate-300">{t._count?.solves || 0}</td>
@@ -833,6 +892,13 @@ export default function AdminPage() {
                           }`}
                         >
                           {t.isBanned ? "Unban" : "Disqualify"}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTeam(t.id, t.name)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          Delete Team
                         </button>
                       </td>
                     </tr>
