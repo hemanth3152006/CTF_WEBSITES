@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ChallengeModal, { ChallengeData } from "@/components/ChallengeModal";
@@ -66,6 +66,8 @@ export default function ArenaPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeData | null>(null);
+  const [eventPaused, setEventPaused] = useState(false);
+  const wasEventPaused = useRef(false);
 
   // Filters
   const [activeCategory, setActiveCategory] = useState("All");
@@ -85,6 +87,10 @@ export default function ArenaPage() {
         if (data?.challenges) {
           setChallenges(data.challenges);
         }
+        if (data?.eventPaused) {
+          setEventPaused(true);
+          setSelectedChallenge(null);
+        }
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
@@ -103,6 +109,30 @@ export default function ArenaPage() {
       })
       .catch(() => router.replace("/login?next=/arena"));
   }, [router]);
+
+  useEffect(() => {
+    const checkEventStatus = () => {
+      fetch("/api/event/timer")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          const paused = Boolean(data?.isPaused);
+          setEventPaused(paused);
+          if (paused) {
+            wasEventPaused.current = true;
+            setChallenges([]);
+            setSelectedChallenge(null);
+          } else if (wasEventPaused.current) {
+            wasEventPaused.current = false;
+            fetchChallenges();
+          }
+        })
+        .catch(() => undefined);
+    };
+
+    checkEventStatus();
+    const interval = setInterval(checkEventStatus, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleChallengeSolveSuccess = (
     challengeId: string,
@@ -278,6 +308,13 @@ export default function ArenaPage() {
                   className="h-44 rounded-xl bg-slate-900/50 border border-slate-800/80 animate-pulse"
                 />
               ))}
+            </div>
+          ) : eventPaused ? (
+            <div className="text-center py-20 bg-amber-950/20 border border-amber-500/30 rounded-xl">
+              <PauseCircle className="w-8 h-8 text-amber-400 mx-auto mb-2" />
+              <div className="font-mono text-sm text-amber-300">
+                The event is currently paused. Challenges and flag submissions are unavailable.
+              </div>
             </div>
           ) : filteredChallenges.length === 0 ? (
             <div className="text-center py-20 bg-slate-900/20 border border-slate-800/50 rounded-xl">
