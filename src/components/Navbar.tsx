@@ -92,7 +92,7 @@ export default function Navbar() {
           </div>
           <div>
             <span className="font-mono text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
-              CYFOX<span className={isAdmin ? "text-rose-400" : "text-emerald-400"}>2.0</span>
+              VYFOX<span className={isAdmin ? "text-rose-400" : "text-emerald-400"}>2.0</span>
               <span
                 className={`text-[10px] font-mono px-1.5 py-0.5 rounded border uppercase ${
                   isAdmin

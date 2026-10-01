@@ -325,7 +325,7 @@ export default function ChallengeModal({
                 type="text"
                 value={flag}
                 onChange={(e) => setFlag(e.target.value)}
-                placeholder={challenge.flagFormat ? challenge.flagFormat.replace("...", "flag_goes_here") : "CYFOX{flag_goes_here}"}
+                placeholder={challenge.flagFormat ? challenge.flagFormat.replace("...", "flag_goes_here") : "VYFOX{flag_goes_here}"}
                 disabled={submitting || challenge.isSolved}
                 className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-white font-mono text-sm placeholder:text-slate-600 disabled:opacity-50"
               />
