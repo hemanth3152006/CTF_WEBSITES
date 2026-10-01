@@ -78,6 +78,16 @@ export default function CountdownTimer() {
 
   const formattedTime = formatDuration(timerData.remainingSeconds);
 
+  if (timerData.isEnded) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-950/40 border border-rose-500/50 text-rose-300 font-mono text-xs font-bold tracking-wider shadow-[0_0_15px_rgba(244,63,94,0.2)]">
+        <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+        <span className="uppercase">EVENT ENDED</span>
+        <span>{formattedTime}</span>
+      </div>
+    );
+  }
+
   if (!timerData.eventStarted) {
     return (
       <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 font-mono text-xs font-bold tracking-wider">
@@ -96,15 +106,6 @@ export default function CountdownTimer() {
           PAUSED
         </span>
         <span>{formattedTime}</span>
-      </div>
-    );
-  }
-
-  if (timerData.isEnded) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-950/40 border border-rose-500/50 text-rose-300 font-mono text-xs font-bold tracking-wider shadow-[0_0_15px_rgba(244,63,94,0.2)]">
-        <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
-        <span className="uppercase">CONTEST ENDED</span>
       </div>
     );
   }

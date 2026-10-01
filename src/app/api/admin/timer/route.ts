@@ -109,6 +109,37 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    if (action === "master-reset") {
+      const resetTime = new Date();
+
+      const updated = await prisma.$transaction(async (tx) => {
+        await tx.team.deleteMany({});
+        await tx.announcement.deleteMany({});
+        await tx.challenge.updateMany({
+          data: { solveCount: 0 },
+        });
+
+        return tx.eventConfig.update({
+          where: { id: "global" },
+          data: {
+            startTime: resetTime,
+            endTime: resetTime,
+            eventStarted: false,
+            isPaused: true,
+            pausedRemainingSeconds: 0,
+            isFrozen: false,
+            freezeTime: null,
+          },
+        });
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Master reset complete. Teams, scores, submissions, solves, and broadcasts were cleared. Challenges were preserved.",
+        config: updated,
+      });
+    }
+
     if (action === "freeze") {
       const updated = await prisma.eventConfig.update({
         where: { id: "global" },

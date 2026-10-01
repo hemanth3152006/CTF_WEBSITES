@@ -24,7 +24,7 @@ export async function GET() {
 
     if (!config.eventStarted) {
       remainingSeconds = 0;
-      isEnded = false;
+      isEnded = config.endTime.getTime() <= now;
     } else if (config.isPaused) {
       remainingSeconds = config.pausedRemainingSeconds ?? 0;
       isEnded = remainingSeconds <= 0;

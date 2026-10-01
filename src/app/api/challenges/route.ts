@@ -12,13 +12,14 @@ export async function GET() {
       );
     }
     const teamId = user?.teamId;
+    const isAdmin = user?.role === "ADMIN";
 
     const eventConfig = await prisma.eventConfig.findUnique({
       where: { id: "global" },
       select: { isPaused: true },
     });
 
-    if (eventConfig?.isPaused) {
+    if (eventConfig?.isPaused && !isAdmin) {
       return NextResponse.json({
         success: true,
         challenges: [],
@@ -26,8 +27,6 @@ export async function GET() {
         eventPaused: true,
       });
     }
-
-    const isAdmin = user?.role === "ADMIN";
 
     // Fetch challenges: Admins see all (including hidden), participants only see visible
     const challenges = await prisma.challenge.findMany({

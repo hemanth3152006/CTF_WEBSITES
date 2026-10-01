@@ -202,9 +202,15 @@ export default function AdminPage() {
     }
   };
 
-  const handleTimerAction = async (action: "pause" | "start" | "start-event" | "reset") => {
+  const handleTimerAction = async (action: "pause" | "start" | "start-event" | "reset" | "master-reset") => {
     if (action === "start-event" && !confirm(`Start the event with a ${timerDuration}-hour countdown?`)) return;
     if (action === "reset" && !confirm("Reset the event to not started?")) return;
+    if (
+      action === "master-reset" &&
+      !confirm(
+        "MASTER RESET: This permanently deletes all teams, scores, submissions, solves, and broadcasts. Challenges will remain. Continue?"
+      )
+    ) return;
 
     setTimerBusy(true);
     try {
@@ -221,6 +227,7 @@ export default function AdminPage() {
       setTimerPaused(Boolean(data.config?.isPaused));
       setEventStarted(Boolean(data.config?.eventStarted));
       setMessage({ type: "success", text: data.message });
+      if (action === "master-reset") loadData();
     } catch {
       setMessage({ type: "error", text: "Failed to update event timer." });
     } finally {
@@ -408,6 +415,15 @@ export default function AdminPage() {
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Reset Timer
+            </button>
+            <button
+              type="button"
+              disabled={timerBusy}
+              onClick={() => handleTimerAction("master-reset")}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/15 text-rose-300 border border-rose-500/50 hover:bg-rose-500/25 font-bold transition disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Master Reset
             </button>
           </div>
         </section>
