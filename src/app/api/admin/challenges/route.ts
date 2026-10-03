@@ -3,6 +3,29 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { hashFlag } from "@/lib/flags";
 
+export async function GET(req: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json({ error: "Access denied. Admin role required." }, { status: 403 });
+    }
+
+    const visibility = new URL(req.url).searchParams.get("visibility");
+    const challenges = await prisma.challenge.findMany({
+      where: visibility === "hidden" ? { isVisible: false } : undefined,
+      orderBy: [{ category: "asc" }, { level: "asc" }, { points: "asc" }],
+      include: {
+        hints: { select: { id: true } },
+      },
+    });
+
+    return NextResponse.json({ success: true, challenges });
+  } catch (error) {
+    console.error("Admin challenge list error:", error);
+    return NextResponse.json({ error: "Failed to load challenges." }, { status: 500 });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser();

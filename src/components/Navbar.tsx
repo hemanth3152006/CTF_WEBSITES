@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Shield, Flag, Trophy, Users, BookOpen, LogOut, Terminal, Eye } from "lucide-react";
+import { Shield, Flag, Trophy, Users, BookOpen, LogOut, Terminal, Eye, EyeOff } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import CountdownTimer from "./CountdownTimer";
 import AnnouncementStrip from "./AnnouncementStrip";
@@ -61,6 +61,7 @@ export default function Navbar() {
   const navItems: NavItem[] = isAdmin
     ? [
         { name: "Command Center", href: "/admin", icon: Shield, isAdminOnly: true },
+        { name: "Hidden Challenges", href: "/admin/hidden-challenges", icon: EyeOff, isAdminOnly: true },
         { name: "Arena Preview", href: "/arena", icon: Eye },
         { name: "Scoreboard", href: "/scoreboard", icon: Trophy },
         { name: "Rules & Guidelines", href: "/rules", icon: BookOpen },
