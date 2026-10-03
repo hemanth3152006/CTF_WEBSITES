@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   Flame,
   Filter,
-  Sparkles,
   Lock,
   Shield,
   PauseCircle,
@@ -63,7 +62,7 @@ function PausedChallengeNotice({
 export default function ArenaPage() {
   const router = useRouter();
   const [challenges, setChallenges] = useState<ChallengeData[]>([]);
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<{ id: string; username: string; role: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedChallenge, setSelectedChallenge] = useState<ChallengeData | null>(null);
   const [eventPaused, setEventPaused] = useState(false);
@@ -134,11 +133,8 @@ export default function ArenaPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleChallengeSolveSuccess = (
-    challengeId: string,
-    isFirstBlood: boolean,
-    points: number
-  ) => {
+  const handleChallengeSolveSuccess = (...args: [string, boolean, number]) => {
+    const [challengeId] = args;
     setChallenges((prev) =>
       prev.map((c) =>
         c.id === challengeId

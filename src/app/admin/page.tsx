@@ -6,10 +6,8 @@ import {
   Shield,
   PlusCircle,
   Radio,
-  Users,
   Terminal,
   Trash2,
-  Ban,
   CheckCircle2,
   XCircle,
   AlertTriangle,
@@ -18,15 +16,74 @@ import {
   Pause,
   Play,
   RotateCcw,
+  Upload,
 } from "lucide-react";
+
+interface AdminUser {
+  username: string;
+  role: string;
+}
+
+interface AdminChallenge {
+  id: string;
+  title: string;
+  category: string;
+  level: number;
+  points: number;
+  isPaused: boolean;
+  isVisible: boolean;
+  solveCount: number;
+  hints?: { id: string }[];
+}
+
+interface AdminSubmission {
+  id: string;
+  isCorrect: boolean;
+  isFirstBlood: boolean;
+  createdAt: string;
+  submittedFlag: string;
+  ipAddress?: string | null;
+  team: { name: string };
+  user: { username: string };
+  challenge: { title: string };
+}
+
+interface AdminMember {
+  id: string;
+  username: string;
+}
+
+interface AdminSolve {
+  points: number;
+  user: { id: string };
+  challenge: { title: string };
+}
+
+interface AdminHintUsage {
+  user: { id: string } | null;
+  hint: { cost: number; challenge: { title: string } };
+}
+
+interface AdminTeam {
+  id: string;
+  name: string;
+  joinCode: string;
+  affiliation?: string | null;
+  points: number;
+  isBanned: boolean;
+  members: AdminMember[];
+  solves: AdminSolve[];
+  unlockedHints: AdminHintUsage[];
+  _count?: { solves: number };
+}
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"challenges" | "feed" | "teams" | "announcements">("challenges");
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Challenges state
-  const [challenges, setChallenges] = useState<any[]>([]);
+  const [challenges, setChallenges] = useState<AdminChallenge[]>([]);
   const [newTitle, setNewTitle] = useState("");
   const [newCategory, setNewCategory] = useState("Web");
   const [newLevel, setNewLevel] = useState("1");
@@ -38,10 +95,11 @@ export default function AdminPage() {
   const [newHintCost, setNewHintCost] = useState("10");
   const [newFileUrl, setNewFileUrl] = useState("");
   const [newFileName, setNewFileName] = useState("");
+  const [fileUploading, setFileUploading] = useState(false);
 
   // Feed & Teams state
-  const [submissions, setSubmissions] = useState<any[]>([]);
-  const [teams, setTeams] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
+  const [teams, setTeams] = useState<AdminTeam[]>([]);
 
   // Announcements state
   const [announceTitle, setAnnounceTitle] = useState("");
@@ -88,8 +146,36 @@ export default function AdminPage() {
     }
   };
 
+  const handleFileUpload = async (file: File | undefined) => {
+    if (!file) return;
+
+    setFileUploading(true);
+    setMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/challenges/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to upload challenge file." });
+        return;
+      }
+
+      setNewFileName(data.fileName);
+      setNewFileUrl(data.fileUrl);
+      setMessage({ type: "success", text: `${data.fileName} uploaded and attached.` });
+    } catch {
+      setMessage({ type: "error", text: "Failed to upload challenge file." });
+    } finally {
+      setFileUploading(false);
+    }
+  };
+
   useEffect(() => {
-    loadData();
+    queueMicrotask(() => void loadData());
     const interval = setInterval(loadData, 20000); // Poll updates every 20s
     return () => clearInterval(interval);
   }, []);
@@ -647,13 +733,31 @@ export default function AdminPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-slate-300 mb-1">File URL / Link</label>
+                    <label className="block text-slate-300 mb-1">Challenge File</label>
+                    <label
+                      htmlFor="challenge-file-upload"
+                      className={`flex items-center justify-center gap-2 w-full px-3 py-1.5 rounded-lg border text-xs font-bold cursor-pointer transition ${
+                        fileUploading
+                          ? "border-slate-700 bg-slate-900 text-slate-500 cursor-wait"
+                          : "border-cyan-500/40 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20"
+                      }`}
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      {fileUploading ? "Uploading..." : "Choose File"}
+                    </label>
+                    <input
+                      id="challenge-file-upload"
+                      type="file"
+                      disabled={fileUploading}
+                      onChange={(e) => void handleFileUpload(e.target.files?.[0])}
+                      className="sr-only"
+                    />
                     <input
                       type="text"
                       value={newFileUrl}
                       onChange={(e) => setNewFileUrl(e.target.value)}
-                      placeholder="/files/task.zip"
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
+                      placeholder="/challenges/task.zip"
+                      className="w-full mt-2 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-cyan-500"
                     />
                   </div>
                   <div>
@@ -859,7 +963,7 @@ export default function AdminPage() {
                       <td className="py-3 px-4 text-slate-400">{t.affiliation || "—"}</td>
                       <td className="py-3 px-4 text-slate-300">
                         <div className="flex flex-wrap gap-1.5">
-                          {t.members.map((m: any) => (
+                          {t.members.map((m) => (
                             <span key={m.id} className="inline-flex items-center gap-1 rounded bg-slate-800 px-1.5 py-1">
                               <span>{m.username}</span>
                               <button
@@ -910,9 +1014,9 @@ export default function AdminPage() {
                             Member activity and hint usage
                           </div>
                           <div className="grid gap-2 lg:grid-cols-2">
-                            {t.members.map((member: any) => {
-                              const memberSolves = (t.solves || []).filter((solve: any) => solve.user?.id === member.id);
-                              const memberHints = (t.unlockedHints || []).filter((unlock: any) => unlock.user?.id === member.id);
+                            {t.members.map((member) => {
+                              const memberSolves = (t.solves || []).filter((solve) => solve.user?.id === member.id);
+                              const memberHints = (t.unlockedHints || []).filter((unlock) => unlock.user?.id === member.id);
 
                               return (
                                 <div key={member.id} className="rounded border border-slate-800 bg-slate-900/80 p-3">
@@ -922,7 +1026,7 @@ export default function AdminPage() {
                                       <span className="text-slate-500">Completed: </span>
                                       {memberSolves.length > 0 ? (
                                         <span className="text-emerald-300">
-                                          {memberSolves.map((solve: any) => `${solve.challenge.title} (+${solve.points})`).join(", ")}
+                                          {memberSolves.map((solve) => `${solve.challenge.title} (+${solve.points})`).join(", ")}
                                         </span>
                                       ) : (
                                         <span className="text-slate-500">None</span>
@@ -932,7 +1036,7 @@ export default function AdminPage() {
                                       <span className="text-slate-500">Hints used: </span>
                                       {memberHints.length > 0 ? (
                                         <span className="text-amber-300">
-                                          {memberHints.map((unlock: any) => `${unlock.hint.challenge.title} (-${unlock.hint.cost})`).join(", ")}
+                                          {memberHints.map((unlock) => `${unlock.hint.challenge.title} (-${unlock.hint.cost})`).join(", ")}
                                         </span>
                                       ) : (
                                         <span className="text-slate-500">None</span>
@@ -943,11 +1047,11 @@ export default function AdminPage() {
                               );
                             })}
                           </div>
-                          {(t.unlockedHints || []).some((unlock: any) => !unlock.user) && (
+                          {(t.unlockedHints || []).some((unlock) => !unlock.user) && (
                             <div className="mt-2 text-[11px] text-slate-500">
                               Legacy hint usage without member attribution: {(t.unlockedHints || [])
-                                .filter((unlock: any) => !unlock.user)
-                                .map((unlock: any) => `${unlock.hint.challenge.title} (-${unlock.hint.cost})`)
+                                .filter((unlock) => !unlock.user)
+                                .map((unlock) => `${unlock.hint.challenge.title} (-${unlock.hint.cost})`)
                                 .join(", ")}
                             </div>
                           )}

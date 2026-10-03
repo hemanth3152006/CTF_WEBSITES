@@ -78,9 +78,9 @@ export async function POST(req: NextRequest) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Login error:", error);
-    const errMsg = error?.message || "";
+    const errMsg = error instanceof Error ? error.message : "";
     if (errMsg.includes("DATABASE_URL") || errMsg.includes("protocol") || errMsg.includes("P1001") || errMsg.includes("connect") || errMsg.includes("does not exist")) {
       return NextResponse.json(
         { error: "Database error: Cannot connect to database. Make sure DATABASE_URL is configured in your Netlify Environment Variables." },

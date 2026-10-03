@@ -55,10 +55,6 @@ export default function Navbar() {
     router.refresh();
   };
 
-  if (loading || !user) {
-    return null;
-  }
-
   // Distinct navigation paths: Admin Portal vs Participant Portal
   const isAdmin = user?.role === "ADMIN";
 

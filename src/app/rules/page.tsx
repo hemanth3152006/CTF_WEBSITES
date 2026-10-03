@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import { ShieldAlert, BookOpen, Clock, Flame, Users, Ban, CheckCircle } from "lucide-react";
+import { ShieldAlert, BookOpen, Clock, Flame, Users, Ban } from "lucide-react";
 
 export default function RulesPage() {
   const rules = [

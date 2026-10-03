@@ -6,10 +6,7 @@ import {
   Trophy,
   Medal,
   Flame,
-  Clock,
   RefreshCw,
-  Users,
-  Shield,
   Snowflake,
 } from "lucide-react";
 

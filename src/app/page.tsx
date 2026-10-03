@@ -24,8 +24,19 @@ interface Announcement {
   createdAt: string;
 }
 
+interface ScoreboardTeam {
+  firstBloods?: number;
+  points: number;
+}
+
+interface ScoreboardResponse {
+  challengeCount?: number;
+  scoreboard: ScoreboardTeam[];
+}
+
 export default function Home() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [stats, setStats] = useState({
     challenges: 11,
     teams: 0,
@@ -34,6 +45,11 @@ export default function Home() {
   });
 
   useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => setIsAuthenticated(Boolean(data?.authenticated)))
+      .catch(() => setIsAuthenticated(false));
+
     fetch("/api/announcements")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -43,13 +59,17 @@ export default function Home() {
 
     fetch("/api/scoreboard")
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
+      .then((data: ScoreboardResponse | null) => {
         if (data?.scoreboard) {
           const list = data.scoreboard;
-          const totalFirstBloods = list.reduce((acc: number, t: any) => acc + (t.firstBloods || 0), 0);
+          const totalFirstBloods = list.reduce(
+            (acc: number, team: ScoreboardTeam) => acc + (team.firstBloods || 0),
+            0
+          );
           const highestScore = list.length > 0 ? list[0].points : 0;
           setStats((prev) => ({
             ...prev,
+            challenges: data.challengeCount ?? prev.challenges,
             teams: list.length,
             firstBloods: totalFirstBloods,
             topScore: highestScore,
@@ -101,10 +121,10 @@ export default function Home() {
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/arena"
+                href={isAuthenticated ? "/arena" : "/login?next=/arena"}
                 className="w-full sm:w-auto px-8 py-3.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-mono font-bold text-sm tracking-wide shadow-[0_0_20px_rgba(16,185,129,0.35)] transition flex items-center justify-center gap-2 group"
               >
-                <span>ENTER ARENA</span>
+                <span>{isAuthenticated ? "ENTER ARENA" : "LOGIN TO ARENA"}</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition" />
               </Link>
               <Link

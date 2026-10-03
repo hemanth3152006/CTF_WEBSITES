@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Navbar from "@/components/Navbar";
-import { Radio, Pin, Search, Bell, Clock, ShieldAlert } from "lucide-react";
+import { Radio, Pin, Search, Bell, Clock } from "lucide-react";
 
 interface Announcement {
   id: string;

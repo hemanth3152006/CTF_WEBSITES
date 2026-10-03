@@ -21,6 +21,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const eventConfig = await prisma.eventConfig.findUnique({
+      where: { id: "global" },
+      select: { eventStarted: true },
+    });
+
+    if (!eventConfig?.eventStarted) {
+      return NextResponse.json(
+        { error: "Registration is locked until the administrator starts the event." },
+        { status: 403 }
+      );
+    }
+
     // Check existing user
     const existingUser = await prisma.user.findFirst({
       where: {

@@ -10,8 +10,6 @@ import {
   LogIn,
   Trophy,
   Shield,
-  Award,
-  Clock,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -31,7 +29,7 @@ interface TeamData {
 }
 
 export default function TeamsPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ id: string; username: string; team?: TeamData | null } | null>(null);
   const [team, setTeam] = useState<TeamData | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -62,7 +60,7 @@ export default function TeamsPage() {
   };
 
   useEffect(() => {
-    fetchSession();
+    queueMicrotask(() => void fetchSession());
   }, []);
 
   const handleCopyCode = () => {

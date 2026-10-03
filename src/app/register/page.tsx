@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import { UserPlus, Shield, KeyRound, Users, ArrowRight } from "lucide-react";
+import { UserPlus, ArrowRight } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -17,6 +17,26 @@ export default function RegisterPage() {
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [eventStarted, setEventStarted] = useState(false);
+  const [checkingEvent, setCheckingEvent] = useState(true);
+
+  useEffect(() => {
+    const refreshEventStatus = async () => {
+      try {
+        const res = await fetch("/api/event/timer");
+        const data = res.ok ? await res.json() : null;
+        setEventStarted(Boolean(data?.eventStarted));
+      } catch {
+        setEventStarted(false);
+      } finally {
+        setCheckingEvent(false);
+      }
+    };
+
+    queueMicrotask(() => void refreshEventStatus());
+    const interval = setInterval(refreshEventStatus, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,6 +95,15 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {checkingEvent ? (
+            <div className="py-10 text-center font-mono text-xs text-slate-400">
+              Checking event registration status...
+            </div>
+          ) : !eventStarted ? (
+            <div className="py-10 text-center font-mono text-xs text-amber-300">
+              Registration opens when the administrator starts the event.
+            </div>
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
             {/* Account Credentials */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -211,6 +240,7 @@ export default function RegisterPage() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
+          )}
 
           <div className="mt-6 pt-6 border-t border-slate-800 text-center font-mono text-xs text-slate-400">
             Already have an account?{" "}

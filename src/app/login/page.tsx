@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
-import { Terminal, Lock, User, ArrowRight, ShieldCheck, Users, Shield } from "lucide-react";
+import { Terminal, Lock, User, ArrowRight, Users, Shield } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -169,7 +169,7 @@ export default function LoginPage() {
 
           {loginMode === "participant" ? (
             <div className="mt-6 pt-6 border-t border-slate-800 text-center font-mono text-xs text-slate-400">
-              Don't have a team account yet?{" "}
+              Don&apos;t have a team account yet?{" "}
               <Link href="/register" className="text-emerald-400 hover:underline font-semibold">
                 Register team here
               </Link>

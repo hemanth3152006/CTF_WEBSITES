@@ -3,39 +3,43 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const config = await prisma.eventConfig.findUnique({
-      where: { id: "global" },
-    });
-
-    const teams = await prisma.team.findMany({
-      where: { isBanned: false },
-      orderBy: [
-        { points: "desc" },
-        { lastSubmissionTime: "asc" },
-        { createdAt: "asc" },
-      ],
-      include: {
-        members: {
-          select: { id: true, username: true },
-        },
-        solves: {
-          select: {
-            id: true,
-            points: true,
-            isFirstBlood: true,
-            createdAt: true,
-            challenge: {
-              select: {
-                id: true,
-                title: true,
-                category: true,
-                points: true,
+    const [config, teams, challengeCount] = await Promise.all([
+      prisma.eventConfig.findUnique({
+        where: { id: "global" },
+      }),
+      prisma.team.findMany({
+        where: { isBanned: false },
+        orderBy: [
+          { points: "desc" },
+          { lastSubmissionTime: "asc" },
+          { createdAt: "asc" },
+        ],
+        include: {
+          members: {
+            select: { id: true, username: true },
+          },
+          solves: {
+            select: {
+              id: true,
+              points: true,
+              isFirstBlood: true,
+              createdAt: true,
+              challenge: {
+                select: {
+                  id: true,
+                  title: true,
+                  category: true,
+                  points: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      }),
+      prisma.challenge.count({
+        where: { isVisible: true },
+      }),
+    ]);
 
     const scoreboard = teams.map((team, index) => {
       const firstBloods = team.solves.filter((s) => s.isFirstBlood).length;
@@ -62,6 +66,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
+      challengeCount,
       event: {
         title: config?.title || "24-Hour College CTF",
         isFrozen: config?.isFrozen || false,

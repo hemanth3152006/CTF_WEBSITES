@@ -28,9 +28,9 @@ export async function GET() {
       });
     }
 
-    // Fetch challenges: Admins see all (including hidden), participants only see visible
+    // The Arena only contains active challenges. Admins manage hidden challenges from Command Center.
     const challenges = await prisma.challenge.findMany({
-      where: isAdmin ? undefined : { isVisible: true },
+      where: { isVisible: true },
       orderBy: [{ category: "asc" }, { level: "asc" }, { points: "asc" }],
       include: {
         hints: {

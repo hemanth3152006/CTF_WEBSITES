@@ -9,7 +9,6 @@ import {
   Download,
   Lightbulb,
   CheckCircle2,
-  AlertTriangle,
   Flame,
   ShieldAlert,
 } from "lucide-react";
