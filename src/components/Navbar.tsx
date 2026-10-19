@@ -74,15 +74,15 @@ export default function Navbar() {
       ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-cyan-400/10 bg-[#080b14]/85 shadow-[0_8px_30px_rgba(0,0,0,0.2)] backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand / Logo */}
         <Link href={isAdmin ? "/admin" : "/"} className="flex items-center gap-2.5 group">
           <div
-            className={`p-2 rounded-lg border transition shadow-lg ${
+            className={`rounded-lg border p-2 transition shadow-lg ${
               isAdmin
-                ? "bg-rose-500/10 border-rose-500/30 text-rose-400 group-hover:border-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.2)]"
-                : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 group-hover:border-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+                ? "bg-rose-500/10 border-rose-500/30 text-rose-400 group-hover:border-rose-400 shadow-[0_0_16px_rgba(244,63,94,0.22)]"
+                : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 group-hover:border-emerald-400 shadow-[0_0_16px_rgba(57,255,20,0.18)]"
             }`}
           >
             {isAdmin ? <Shield className="w-5 h-5" /> : <Terminal className="w-5 h-5 group-hover:scale-105 transition" />}
@@ -122,8 +122,8 @@ export default function Navbar() {
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-md text-xs font-mono font-medium transition ${
                   isActive
                     ? isSpecialAdmin
-                      ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-[0_0_10px_rgba(244,63,94,0.2)] font-bold"
-                      : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.15)] font-bold"
+                      ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 shadow-[0_0_12px_rgba(244,63,94,0.22)] font-bold"
+                        : "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-[0_0_12px_rgba(57,255,20,0.16)] font-bold"
                     : isSpecialAdmin
                     ? "text-rose-400 hover:bg-rose-950/30 border border-rose-900/40 font-semibold"
                     : "text-slate-300 hover:text-white hover:bg-slate-900 border border-transparent"

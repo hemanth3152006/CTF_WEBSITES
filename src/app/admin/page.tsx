@@ -17,6 +17,8 @@ import {
   Play,
   RotateCcw,
   Upload,
+  Pin,
+  Clock,
 } from "lucide-react";
 
 interface AdminUser {
@@ -77,6 +79,14 @@ interface AdminTeam {
   _count?: { solves: number };
 }
 
+interface AdminAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  isPinned: boolean;
+  createdAt: string;
+}
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"challenges" | "feed" | "teams" | "announcements">("challenges");
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
@@ -100,6 +110,7 @@ export default function AdminPage() {
   // Feed & Teams state
   const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
   const [teams, setTeams] = useState<AdminTeam[]>([]);
+  const [announcements, setAnnouncements] = useState<AdminAnnouncement[]>([]);
 
   // Announcements state
   const [announceTitle, setAnnounceTitle] = useState("");
@@ -138,6 +149,12 @@ export default function AdminPage() {
         const timerData = await timerRes.json();
         setTimerPaused(Boolean(timerData.isPaused));
         setEventStarted(Boolean(timerData.eventStarted));
+      }
+
+      const announcementsRes = await fetch("/api/admin/announcements");
+      if (announcementsRes.ok) {
+        const announcementsData = await announcementsRes.json();
+        setAnnouncements(announcementsData.announcements || []);
       }
     } catch (e) {
       console.error(e);
@@ -417,13 +434,62 @@ export default function AdminPage() {
         }),
       });
 
-      if (res.ok) {
-        setMessage({ type: "success", text: "Announcement broadcasted live to all teams!" });
-        setAnnounceTitle("");
-        setAnnounceContent("");
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to broadcast announcement." });
+        return;
       }
+
+      setMessage({ type: "success", text: "Announcement broadcasted live to all teams!" });
+      setAnnounceTitle("");
+      setAnnounceContent("");
+      setAnnouncements((current) => [data.announcement, ...current]);
     } catch {
       setMessage({ type: "error", text: "Failed to broadcast announcement." });
+    }
+  };
+
+  const handleToggleAnnouncementPin = async (announcement: AdminAnnouncement) => {
+    try {
+      const res = await fetch("/api/admin/announcements", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: announcement.id, isPinned: !announcement.isPinned }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to update announcement pin." });
+        return;
+      }
+
+      setMessage({ type: "success", text: data.message });
+      setAnnouncements((current) =>
+        current
+          .map((item) => (item.id === announcement.id ? data.announcement : item))
+          .sort((a, b) => Number(b.isPinned) - Number(a.isPinned) || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      );
+    } catch {
+      setMessage({ type: "error", text: "Failed to update announcement pin." });
+    }
+  };
+
+  const handleDeleteAnnouncement = async (announcement: AdminAnnouncement) => {
+    if (!confirm(`Delete "${announcement.title}" permanently?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/announcements?id=${encodeURIComponent(announcement.id)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage({ type: "error", text: data.error || "Failed to delete announcement." });
+        return;
+      }
+
+      setMessage({ type: "success", text: data.message });
+      setAnnouncements((current) => current.filter((item) => item.id !== announcement.id));
+    } catch {
+      setMessage({ type: "error", text: "Failed to delete announcement." });
     }
   };
 
@@ -1068,57 +1134,110 @@ export default function AdminPage() {
 
         {/* Tab 4: Broadcast Announcements */}
         {activeTab === "announcements" && (
-          <div className="mt-6 max-w-xl p-6 rounded-xl bg-slate-900/70 border border-slate-800 text-xs">
-            <h3 className="font-bold text-sm text-white mb-4 flex items-center gap-2">
-              <Radio className="w-4 h-4 text-emerald-400" />
-              <span>Broadcast Live Announcement</span>
-            </h3>
+          <div className="mt-6 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] gap-6 items-start">
+            <div className="p-6 rounded-xl bg-slate-900/70 border border-slate-800 text-xs">
+              <h3 className="font-bold text-sm text-white mb-4 flex items-center gap-2">
+                <Radio className="w-4 h-4 text-emerald-400" />
+                <span>Broadcast Live Announcement</span>
+              </h3>
 
-            <form onSubmit={handleCreateAnnouncement} className="space-y-4">
-              <div>
-                <label className="block text-slate-300 mb-1">Headline</label>
-                <input
-                  type="text"
-                  required
-                  value={announceTitle}
-                  onChange={(e) => setAnnounceTitle(e.target.value)}
-                  placeholder="e.g. Hint released for Crypto Level 3"
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
-                />
+              <form onSubmit={handleCreateAnnouncement} className="space-y-4">
+                <div>
+                  <label className="block text-slate-300 mb-1">Headline</label>
+                  <input
+                    type="text"
+                    required
+                    value={announceTitle}
+                    onChange={(e) => setAnnounceTitle(e.target.value)}
+                    placeholder="e.g. Hint released for Crypto Level 3"
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 mb-1">Message Content</label>
+                  <textarea
+                    rows={4}
+                    required
+                    value={announceContent}
+                    onChange={(e) => setAnnounceContent(e.target.value)}
+                    placeholder="Provide full announcement details..."
+                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 resize-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="pinned"
+                    checked={announcePinned}
+                    onChange={(e) => setAnnouncePinned(e.target.checked)}
+                    className="rounded bg-slate-950 border-slate-700 text-emerald-500"
+                  />
+                  <label htmlFor="pinned" className="text-slate-300 cursor-pointer">
+                    Pin to top of participant dashboards
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition shadow-[0_0_12px_rgba(16,185,129,0.25)]"
+                >
+                  Send Broadcast
+                </button>
+              </form>
+            </div>
+
+            <div className="p-6 rounded-xl bg-slate-900/70 border border-slate-800 text-xs">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h3 className="font-bold text-sm text-white">Sent Announcements</h3>
+                <span className="text-slate-500">{announcements.length} total</span>
               </div>
 
-              <div>
-                <label className="block text-slate-300 mb-1">Message Content</label>
-                <textarea
-                  rows={4}
-                  required
-                  value={announceContent}
-                  onChange={(e) => setAnnounceContent(e.target.value)}
-                  placeholder="Provide full announcement details..."
-                  className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 resize-none"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="pinned"
-                  checked={announcePinned}
-                  onChange={(e) => setAnnouncePinned(e.target.checked)}
-                  className="rounded bg-slate-950 border-slate-700 text-emerald-500"
-                />
-                <label htmlFor="pinned" className="text-slate-300 cursor-pointer">
-                  Pin to top of participant dashboards
-                </label>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition shadow-[0_0_12px_rgba(16,185,129,0.25)]"
-              >
-                Send Broadcast
-              </button>
-            </form>
+              {announcements.length === 0 ? (
+                <p className="py-8 text-center text-slate-500">No announcements have been sent.</p>
+              ) : (
+                <div className="space-y-3 max-h-[32rem] overflow-y-auto pr-1">
+                  {announcements.map((announcement) => (
+                    <div key={announcement.id} className="rounded-lg border border-slate-800 bg-slate-950/70 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="font-bold text-white break-words">{announcement.title}</h4>
+                            {announcement.isPinned && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
+                                <Pin className="w-3 h-3" /> PINNED
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-slate-300 whitespace-pre-wrap break-words">{announcement.content}</p>
+                          <div className="mt-2 flex items-center gap-1 text-[10px] text-slate-500">
+                            <Clock className="w-3 h-3" />
+                            {new Date(announcement.createdAt).toLocaleString()}
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAnnouncementPin(announcement)}
+                            className="rounded border border-slate-700 px-2 py-1 text-[10px] text-slate-300 hover:border-amber-400 hover:text-amber-300"
+                          >
+                            {announcement.isPinned ? "Unpin" : "Pin"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteAnnouncement(announcement)}
+                            className="rounded border border-red-900/70 px-2 py-1 text-[10px] text-red-300 hover:border-red-400 hover:text-red-200"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
